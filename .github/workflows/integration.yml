@@ -1,0 +1,59 @@
+name: Integration
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run action against dev API
+        id: vibectl
+        uses: ./
+        with:
+          api-key: ${{ secrets.VIBECTL_API_KEY }}
+          prompt: 'EXECUTION_CHECK'
+          api-url: 'https://dev-api.vibectl.dev'
+          timeout: '300'
+        env:
+          GITHUB_REPOSITORY: vibectl/test-repo
+
+      - name: Validate task submission
+        run: |
+          echo "Task ID: ${{ steps.vibectl.outputs.task-id }}"
+          if [ -z "${{ steps.vibectl.outputs.task-id }}" ]; then
+            echo "::error::Task ID is empty - task submission failed"
+            exit 1
+          fi
+
+      - name: Validate execution result
+        run: |
+          echo "Result: ${{ steps.vibectl.outputs.result }}"
+          echo "Duration: ${{ steps.vibectl.outputs.duration-ms }}ms"
+          if [ "${{ steps.vibectl.outputs.result }}" != "completed" ]; then
+            echo "::error::Expected result 'completed', got '${{ steps.vibectl.outputs.result }}'"
+            exit 1
+          fi
+
+      - name: Validate response contains expected fields
+        run: |
+          OUTPUT='${{ steps.vibectl.outputs.output }}'
+          echo "Output length: ${#OUTPUT}"
+          if [ -z "$OUTPUT" ]; then
+            echo "::error::Output is empty - SSE streaming or response parsing failed"
+            exit 1
+          fi
+          # Verify the output contains expected JSON fields from the protocol
+          if echo "$OUTPUT" | grep -q '"protocol_version"'; then
+            echo "Protocol version field found in output"
+          else
+            echo "::warning::Protocol version field not found in output (may be wrapped in other text)"
+          fi

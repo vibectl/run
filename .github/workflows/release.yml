@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.target_commitish }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Extract major version
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          MAJOR=$(echo "$TAG" | grep -oP '^v\d+' || echo "")
+          if [ -z "$MAJOR" ]; then
+            echo "::error::Could not extract major version from tag '$TAG'"
+            exit 1
+          fi
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "Major version tag: $MAJOR"
+
+      - name: Update major version tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -fa "${{ steps.version.outputs.major }}" -m "Update ${{ steps.version.outputs.major }} to ${{ github.event.release.tag_name }}"
+          git push origin "${{ steps.version.outputs.major }}" --force
