@@ -1,0 +1,51 @@
+name: vibectl CI Example
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  code-review:
+    name: Automated Code Review
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run vibectl code review
+        id: vibectl
+        uses: vibectl/run@v1
+        with:
+          api-key: ${{ secrets.VIBECTL_API_KEY }}
+          prompt: |
+            Review this pull request for:
+            - Code quality and maintainability
+            - Security vulnerabilities
+            - Performance issues
+            - Best practices
+
+            Provide actionable feedback.
+          timeout: 600  # 10 minutes
+
+      - name: Display results
+        run: |
+          echo "Task ID: ${{ steps.vibectl.outputs.task-id }}"
+          echo "Result: ${{ steps.vibectl.outputs.result }}"
+          echo "Duration: ${{ steps.vibectl.outputs.duration-ms }}ms"
+          echo "Output:"
+          echo "${{ steps.vibectl.outputs.output }}"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.vibectl.outputs.result == 'completed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## vibectl Code Review\n\n${{ steps.vibectl.outputs.output }}`
+            })

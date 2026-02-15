@@ -1,0 +1,39 @@
+name: 'vibectl Run'
+description: 'Execute Claude Code tasks via vibectl platform in CI/CD workflows'
+author: 'vibectl'
+
+inputs:
+  api-key:
+    description: 'vibectl API key for authentication (use GitHub secrets)'
+    required: true
+  prompt:
+    description: 'The prompt/command to execute with Claude Code'
+    required: true
+  api-url:
+    description: 'vibectl API endpoint URL'
+    required: false
+    default: 'https://api.vibectl.dev'
+  timeout:
+    description: 'Maximum execution time in seconds (default: 1800s / 30 minutes)'
+    required: false
+    default: '1800'
+
+outputs:
+  result:
+    description: 'Task execution result (completed, failed, timeout)'
+  task-id:
+    description: 'Unique task identifier for tracking'
+  duration-ms:
+    description: 'Task execution duration in milliseconds'
+  cost-usd:
+    description: 'Estimated cost in USD (if available)'
+  output:
+    description: 'Task output or error message'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+
+branding:
+  icon: 'terminal'
+  color: 'blue'

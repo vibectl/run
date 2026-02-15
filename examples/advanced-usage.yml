@@ -1,0 +1,63 @@
+name: vibectl Advanced CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  security-scan:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Security scan with custom timeout
+        id: security
+        uses: vibectl/run@v1
+        with:
+          api-key: ${{ secrets.VIBECTL_API_KEY }}
+          prompt: |
+            Perform comprehensive security analysis:
+            1. Check for common vulnerabilities (SQL injection, XSS, etc.)
+            2. Review authentication and authorization patterns
+            3. Identify exposed secrets or credentials
+            4. Analyze dependency security
+          timeout: 900  # 15 minutes (streaming output)
+
+      - name: Upload results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results
+          path: |
+            ${{ steps.security.outputs.output }}
+
+      - name: Fail on security issues
+        if: steps.security.outputs.result == 'failed'
+        run: exit 1
+
+  documentation-check:
+    name: Documentation Review
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check documentation quality
+        id: docs
+        uses: vibectl/run@v1
+        with:
+          api-key: ${{ secrets.VIBECTL_API_KEY }}
+          prompt: |
+            Review all markdown documentation files for:
+            - Clarity and completeness
+            - Broken links
+            - Outdated information
+            - Missing code examples
+
+      - name: Display cost
+        if: steps.docs.outputs.cost-usd != ''
+        run: echo "Documentation review cost: ${{ steps.docs.outputs.cost-usd }} USD"

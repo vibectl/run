@@ -1,0 +1,33 @@
+{
+  "name": "vibectl-run-action",
+  "version": "1.0.0",
+  "description": "GitHub Action for vibectl platform task execution",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "rollup --config rollup.config.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "actions",
+    "vibectl",
+    "claude-code",
+    "ci-cd"
+  ],
+  "author": "vibectl",
+  "license": "MIT",
+  "packageManager": "pnpm@10.24.0",
+  "dependencies": {
+    "@actions/core": "^3.0.0",
+    "@actions/http-client": "^4.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/node": "^25.2.3",
+    "rollup": "^4.57.1",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3"
+  }
+}
